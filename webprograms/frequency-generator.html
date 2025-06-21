@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Frequency generator</title>
+  <style>
+    :root {
+      --border: #ccc;
+      --radius: 5px;
+      --padding: 10px;
+      --bg: #f4f4f4;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: var(--bg);
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 500px;
+      padding: 20px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .container>*+* {
+      margin-top: 15px;
+    }
+
+    h1 {
+      margin: 0 0 20px;
+    }
+
+    .container>div {
+      display: block;
+      text-align: left;
+      margin-top: 15px;
+    }
+
+    input[type="number"],
+    button {
+      width: 100%;
+      padding: var(--padding);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      margin-top: 5px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      cursor: pointer;
+      margin-top: 5px;
+    }
+
+    button {
+      background: #007bff;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    #balance-container,
+    #waveform-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #balance-container input {
+      flex: 1;
+      margin: 0;
+    }
+
+    #balanceValue,
+    #waveformValue {
+      display: inline-block;
+      padding: 5px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg);
+      font-weight: bold;
+      width: 70px;
+      text-align: center;
+    }
+
+    #waveform-container {
+      display: block;
+      gap: 0px;
+    }
+
+    #waveformValue {
+      width: 100%;
+      margin-top: 5px;
+    }
+
+    #waveformButtons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      margin: 0;
+    }
+
+    #waveformButtons button {
+      flex: 1;
+    }
+
+    #amplitudeLinearDisplay {
+      display: block;
+      margin-top: 5px;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .error-message {
+      color: #d00;
+      font-size: 12px;
+      display: none;
+      margin-top: 5px;
+      text-align: left;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Frequency generator</h1>
+    <div>
+      Frequency (Hz):
+      <input type="range" id="frequencySlider" min="1" max="24000" value="1000" step="1">
+      <input type="number" id="frequencyInput" min="1" max="24000" value="1000"
+        placeholder="Frequency (min. 1, max. 24000)">
+      <span id="frequencyError" class="error-message"></span>
+    </div>
+    <div>
+      Level (dB):
+      <input type="range" id="volumeSlider" min="-96" max="0" value="-3" step="0.01">
+      <input type="number" id="volumeInput" min="-96" max="0" value="-3" step="0.01"
+        placeholder="Level (min. -96, max. 0)">
+      <span id="volumeError" class="error-message"></span>
+      <span id="amplitudeLinearDisplay">(Amplitude: 0.71)</span>
+    </div>
+    <div>
+      Channels balance:
+      <div id="balance-container">
+        <input type="range" id="balanceSlider" min="-1" max="1" value="0" step="0.01">
+        <span id="balanceValue">LR 0</span>
+      </div>
+      <span id="balanceError" class="error-message"></span>
+    </div>
+    <div>
+      Signal type:
+      <div id="waveform-container">
+        <span id="waveformValue">Sine</span>
+        <div id="waveformButtons">
+          <button type="button" data-wave="sine">Sine</button>
+          <button type="button" data-wave="square">Square</button>
+          <button type="button" data-wave="sawtooth">Sawtooth</button>
+          <button type="button" data-wave="triangle">Triangle</button>
+        </div>
+      </div>
+    </div>
+    <button id="playPauseButton">Playback</button>
+  </div>
+  <script>
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const gainNode = audioContext.createGain();
+    const stereoPannerNode = audioContext.createStereoPanner();
+
+    gainNode.connect(stereoPannerNode).connect(audioContext.destination);
+    let oscillatorNode = null;
+    let isPlaying = false;
+
+    const frequencySliderElement = document.getElementById('frequencySlider');
+    const frequencyInputElement = document.getElementById('frequencyInput');
+    const volumeSliderElement = document.getElementById('volumeSlider');
+    const volumeInputElement = document.getElementById('volumeInput');
+    const balanceSliderElement = document.getElementById('balanceSlider');
+    const amplitudeLinearDisplayElement = document.getElementById('amplitudeLinearDisplay');
+    const balanceValueElement = document.getElementById('balanceValue');
+    const playPauseButtonElement = document.getElementById('playPauseButton');
+    const waveformValueElement = document.getElementById('waveformValue');
+    const waveformButtons = document.querySelectorAll('#waveformButtons button');
+
+    let currentWaveType = 'sine';
+
+    waveformButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const wave = btn.dataset.wave;
+        const waveText = btn.textContent.trim();
+
+        currentWaveType = wave;
+        waveformValueElement.textContent = waveText;
+
+        if (isPlaying && oscillatorNode) {
+          oscillatorNode.type = wave;
+        }
+      });
+    });
+
+    function showError(el, msg) {
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+    function clearError(el) {
+      el.textContent = '';
+      el.style.display = 'none';
+    }
+
+
+    function clampValueToRange(rawValue, minV, maxV, errorEl, errorMsg) {
+      if (rawValue < minV) {
+        showError(errorEl, errorMsg);
+        return minV;
+      }
+      if (rawValue > maxV) {
+        showError(errorEl, errorMsg);
+        return maxV;
+      }
+      clearError(errorEl);
+      return rawValue;
+    }
+
+    function updateInterfaceAndOscillatorParameters() {
+      let rawFreq = frequencyInputElement.value;
+      let rawVol = volumeInputElement.value;
+      let rawBal = balanceSliderElement.value;
+
+      frequencySliderElement.value = rawFreq;
+      volumeSliderElement.value = rawVol;
+      balanceSliderElement.value = rawBal;
+
+      if (isPlaying && oscillatorNode) {
+        const numFreq = Number(rawFreq);
+        if (rawFreq.trim() === '' || isNaN(numFreq) || !Number.isInteger(numFreq)) {
+          showError(
+            document.getElementById('frequencyError'),
+            'Enter number from 1 to 24000 Hz.'
+          );
+        } else {
+          const fcl = clampValueToRange(
+            numFreq, 1, 24000,
+            document.getElementById('frequencyError'),
+            'Frequency should be in range from 1 to 24000 Hz.'
+          );
+          oscillatorNode.frequency.setValueAtTime(fcl, audioContext.currentTime);
+          frequencyInputElement.value = frequencySliderElement.value = fcl;
+        }
+
+        const numVol = Number(rawVol);
+        if (rawVol.trim() === '' || isNaN(numVol)) {
+          showError(
+            document.getElementById('volumeError'),
+            'Enter number from -96 to 0 dB.'
+          );
+        } else {
+          const vcl = clampValueToRange(
+            numVol, -96, 0,
+            document.getElementById('volumeError'),
+            'Level should be in range from -96 to 0 dB.'
+          );
+          gainNode.gain.setValueAtTime(Math.pow(10, vcl / 20), audioContext.currentTime);
+          volumeInputElement.value = volumeSliderElement.value = vcl;
+        }
+
+        const numBal = Number(rawBal);
+        if (rawBal.trim() === '' || isNaN(numBal)) {
+          showError(
+            document.getElementById('balanceError'),
+            'Enter number from -1 (left channel) to +1 (right channel).'
+          );
+        } else {
+          const bcl = clampValueToRange(
+            numBal, -1, 1,
+            document.getElementById('balanceError'),
+            'Balance should be in range from +1 (left channel) to +1 (right channel).'
+          );
+          stereoPannerNode.pan.setValueAtTime(bcl, audioContext.currentTime);
+          balanceSliderElement.value = bcl;
+        }
+      }
+
+      const lin = Math.pow(10, parseFloat(volumeInputElement.value) / 20);
+      amplitudeLinearDisplayElement.textContent = `(Amplitude: ${lin.toFixed(2)})`;
+
+      const curBal = Number(balanceSliderElement.value);
+      balanceValueElement.textContent =
+        curBal === 0
+          ? 'LR 0'
+          : curBal > 0
+            ? `R ${curBal.toFixed(2)}`
+            : `L ${Math.abs(curBal).toFixed(2)}`;
+    }
+
+    frequencySliderElement.addEventListener('input', e => {
+      frequencyInputElement.value = e.target.value;
+      updateInterfaceAndOscillatorParameters();
+    });
+    volumeSliderElement.addEventListener('input', e => {
+      volumeInputElement.value = e.target.value;
+      updateInterfaceAndOscillatorParameters();
+    });
+    balanceSliderElement.addEventListener('input', updateInterfaceAndOscillatorParameters);
+    frequencyInputElement.addEventListener('input', e => {
+      frequencySliderElement.value = e.target.value;
+      updateInterfaceAndOscillatorParameters();
+    });
+    volumeInputElement.addEventListener('input', e => {
+      volumeSliderElement.value = e.target.value;
+      updateInterfaceAndOscillatorParameters();
+    });
+
+    function clampValueToRangeForStart(rawValue, minimumValue, maximumValue, errorMessage) {
+      if (rawValue < minimumValue || rawValue > maximumValue) {
+        alert(errorMessage);
+        return rawValue < minimumValue ? minimumValue : maximumValue;
+      }
+      return rawValue;
+    }
+
+    function validateInputValuesBeforeStart() {
+      const validationErrors = [];
+      const frequencyRaw = frequencyInputElement.value;
+      const volumeRaw = volumeInputElement.value;
+      const balanceRaw = balanceSliderElement.value;
+      const frequencyValue = Number(frequencyRaw);
+      const volumeValue = Number(volumeRaw);
+      const balanceValue = Number(balanceRaw);
+
+      if (isNaN(frequencyRaw) || frequencyRaw.trim() === '') {
+        validationErrors.push('Incorrect frequency value. Frequency should be a natural number in range from 1 to 24000 Hz.');
+      } else if (!Number.isInteger(frequencyValue) || frequencyValue < 1 || frequencyValue > 24000) {
+        validationErrors.push('Incorrect frequency value. Frequency should be a natural number in range from 1 to 24000 Hz.');
+      }
+
+      if (isNaN(volumeRaw) || volumeRaw.trim() === '' || volumeValue < -96 || volumeValue > 0) {
+        validationErrors.push('Incorrect level value. Level should be in range from -96 to 0 dB.');
+      }
+
+      if (isNaN(balanceRaw) || balanceRaw.trim() === '' || balanceValue < -1 || balanceValue > 1) {
+        validationErrors.push('Incorrect balance value. Balance should be in range from +1 (left channel) to +1 (right channel).');
+      }
+
+      if (validationErrors.length > 0) {
+        alert('Further operation realization is impossible, because:\n' + validationErrors.join('\n') + '\nCheck out entered values, and then try again.');
+        return false;
+      }
+      return true;
+    }
+
+    playPauseButtonElement.addEventListener('click', () => {
+      if (isPlaying) {
+        oscillatorNode.stop();
+        oscillatorNode.disconnect();
+        oscillatorNode = null;
+        audioContext.suspend();
+        playPauseButtonElement.textContent = 'Playback';
+        isPlaying = false;
+
+        clearError(document.getElementById('frequencyError'));
+        clearError(document.getElementById('volumeError'));
+        clearError(document.getElementById('balanceError'));
+
+      } else {
+        if (!validateInputValuesBeforeStart()) {
+          return;
+        }
+        if (audioContext.state === 'suspended') {
+          audioContext.resume();
+        }
+
+        oscillatorNode = audioContext.createOscillator();
+        oscillatorNode.type = currentWaveType;
+        oscillatorNode.frequency.value = Number(frequencyInputElement.value);
+        gainNode.gain.value = Math.pow(10, Number(volumeInputElement.value) / 20);
+        stereoPannerNode.pan.value = Number(balanceSliderElement.value);
+        oscillatorNode.connect(gainNode);
+        oscillatorNode.start();
+        playPauseButtonElement.textContent = 'Pause';
+        isPlaying = true;
+      }
+    });
+  </script>
+</body>
+
+</html>

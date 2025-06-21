@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Audio file generator</title>
+  <style>
+    :root {
+      --border: #ccc;
+      --radius: 5px;
+      --padding: 10px;
+      --bg: #f4f4f4;
+    }
+
+    h1 {
+      margin: 0 0 20px 0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: var(--bg);
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 500px;
+      padding: 20px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .container>*+* {
+      margin-top: 15px;
+    }
+
+    .container>div {
+      display: block;
+      text-align: left;
+      margin-top: 15px;
+    }
+
+    input[type="number"],
+    button {
+      width: 100%;
+      padding: var(--padding);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 14px;
+      margin-top: 5px;
+    }
+
+    button {
+      background: #007bff;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    #sampleRateButtons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      margin: 0;
+    }
+
+    #sampleRateButtons button {
+      flex: 1;
+    }
+
+    #amplitudeLinear {
+      display: block;
+      margin-top: 5px;
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Audio file generator</h1>
+    <div>
+      Sample rate (Hz):
+      <input type="number" id="sampleRate" value="96000" min="1" max="384000" step="1"
+        placeholder="Sample rate (min. 1, max. 384000)">
+      <div id="sampleRateButtons">
+        <button type="button" data-samplerate="48000">48 kHz</button>
+        <button type="button" data-samplerate="96000">96 kHz</button>
+        <button type="button" data-samplerate="192000">192 kHz</button>
+        <button type="button" data-samplerate="384000">384 kHz</button>
+      </div>
+    </div>
+    <div>
+      Duration (s):
+      <input type="number" id="duration" value="30" step="0.01" placeholder="Duration (min. > 0, max. 900)">
+    </div>
+    <div>
+      Level (dB):
+      <input type="number" id="amplitude" value="-3" min="-96" max="0" step="0.01"
+        placeholder="Level (min. -96, max. 0)">
+      <span id="amplitudeLinear">(Amplitude: 0.71)</span>
+    </div>
+    <div>
+      Initial frequency (Hz):
+      <input type="number" id="fStart" value="10" min="1" max="192000" step="1"
+        placeholder="Initial frequency (min. 1, max. 192000)">
+    </div>
+    <div>
+      Final frequency (Hz):
+      <input type="number" id="fEnd" value="22000" min="1" max="192000" step="1"
+        placeholder="Final frequency (min. 1, max. 192000)">
+    </div>
+    <button id="generate">Generate audio file</button>
+  </div>
+  <script>
+    function updateAmplitudeDisplay() {
+      const amplitudeInput = document.getElementById("amplitude");
+      const dbValue = parseFloat(amplitudeInput.value);
+      const linearDisplay = document.getElementById("amplitudeLinear");
+      const linear = Math.pow(10, dbValue / 20);
+      linearDisplay.textContent = `(Amplitude: ${linear.toFixed(2)})`;
+    }
+    document.getElementById("amplitude").addEventListener("input", updateAmplitudeDisplay);
+
+    document.querySelectorAll("#sampleRateButtons button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const value = btn.getAttribute("data-samplerate");
+        document.getElementById("sampleRate").value = value;
+      });
+    });
+
+    function validateInputs() {
+      const errors = [];
+
+      const sampleRate = Number(document.getElementById("sampleRate").value);
+      if (isNaN(sampleRate) || !Number.isInteger(sampleRate) || sampleRate <= 0 || sampleRate > 384000) {
+        errors.push("Incorrect sample rate value. Value should be a natural number in range from 1 to 384000 Hz.");
+      }
+
+      const duration = Number(document.getElementById("duration").value);
+      if (isNaN(duration) || duration <= 0 || duration > 900) {
+        errors.push("Incorrect duration value. Value cannot be negative, zero, null or greater than 900 seconds.");
+      }
+
+      const amplitudeStr = document.getElementById("amplitude").value.trim();
+      const amplitude = Number(amplitudeStr);
+      if (amplitudeStr === "" || isNaN(amplitude) || amplitude < -96 || amplitude > 0) {
+        errors.push("Incorrect level value. Value should be in range from -96 to 0 dB.");
+      }
+
+      const fStart = Number(document.getElementById("fStart").value);
+      if (isNaN(fStart) || !Number.isInteger(fStart) || fStart <= 0 || fStart > 192000) {
+        errors.push("Incorrect initial frequency value. Value should be a natural number in range from 1 to 192000 Hz.");
+      }
+
+      const fEnd = Number(document.getElementById("fEnd").value);
+      if (isNaN(fEnd) || !Number.isInteger(fEnd) || fEnd <= 0 || fEnd > 192000) {
+        errors.push("Incorrect final frequency value. Value should be a natural number in range from 1 to 192000 Hz.");
+      }
+
+      if (errors.length > 0) {
+        const errorMessage = "Further operation realization is impossible, because:\n" + errors.join("\n") + "\nCheck out entered values, and then try again.";
+        alert(errorMessage);
+        return false;
+      }
+      return true;
+    }
+
+    document.getElementById("generate").addEventListener("click", () => {
+
+      if (!validateInputs()) {
+        return;
+      }
+
+      const sampleRate = Number(document.getElementById("sampleRate").value);
+      const duration = Number(document.getElementById("duration").value);
+      const dbAmplitude = Number(document.getElementById("amplitude").value);
+      const amplitude = Math.pow(10, dbAmplitude / 20);
+      const fStart = Number(document.getElementById("fStart").value);
+      const fEnd = Number(document.getElementById("fEnd").value);
+
+      const maxFreq = Math.max(fStart, fEnd);
+
+      if (maxFreq * 2 > sampleRate) {
+        const warning =
+          "Sample rate is not enough for highest value of frequency range. " +
+          "It should be at least two times greater than highest frequency point value. " +
+          "Continuing will lead to aliasing effect in output file.\n" + "Continue operation?";
+        if (!confirm(warning)) {
+          return;
+        }
+      }
+
+      const numSamples = Math.floor(sampleRate * duration);
+      if (numSamples <= 0) {
+        alert("Operation cannot be realized due to the fact that invalid values are specified. Check out duration and sample rate, and then try again.");
+        return;
+      }
+
+      const signal = new Float32Array(numSamples);
+      for (let i = 0; i < numSamples; i++) {
+        const t = i / sampleRate;
+        const phase = 2 * Math.PI * (fStart * t + (fEnd - fStart) * t * t / (2 * duration));
+        signal[i] = amplitude * Math.sin(phase);
+      }
+      const wavBlob = createWavFile(signal, sampleRate);
+      const fileName = `linear_sweep_${fStart}Hz_to_${fEnd}Hz_${dbAmplitude}dB_${duration}s_${sampleRate}Hz_32bit.wav`;
+      const tempLink = document.createElement("a");
+      tempLink.href = URL.createObjectURL(wavBlob);
+      tempLink.download = fileName;
+      document.body.appendChild(tempLink);
+      tempLink.click();
+      document.body.removeChild(tempLink);
+      setTimeout(() => URL.revokeObjectURL(tempLink.href), 100);
+    });
+
+    function createWavFile(samples, sampleRate) {
+      const numChannels = 1;
+      const bytesPerSample = 4;
+      const blockAlign = numChannels * bytesPerSample;
+      const byteRate = sampleRate * blockAlign;
+      const dataSize = samples.length * bytesPerSample;
+      const buffer = new ArrayBuffer(44 + dataSize);
+      const view = new DataView(buffer);
+
+      let offset = 0;
+      function writeString(s) {
+        for (let i = 0; i < s.length; i++) {
+          view.setUint8(offset++, s.charCodeAt(i));
+        }
+      }
+      function writeUint32(val) {
+        view.setUint32(offset, val, true);
+        offset += 4;
+      }
+      function writeUint16(val) {
+        view.setUint16(offset, val, true);
+        offset += 2;
+      }
+
+      writeString("RIFF");
+      writeUint32(36 + dataSize);
+      writeString("WAVE");
+      writeString("fmt ");
+      writeUint32(16);
+      writeUint16(3);
+      writeUint16(numChannels);
+      writeUint32(sampleRate);
+      writeUint32(byteRate);
+      writeUint16(blockAlign);
+      writeUint16(32);
+      writeString("data");
+      writeUint32(dataSize);
+
+      for (let i = 0; i < samples.length; i++) {
+        view.setFloat32(offset, samples[i], true);
+        offset += 4;
+      }
+
+      return new Blob([buffer], { type: "audio/wav" });
+    }
+  </script>
+</body>
+
+</html>

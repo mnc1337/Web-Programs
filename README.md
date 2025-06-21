@@ -1,1 +1,40 @@
 # Web-Programs
+
+Package of webprograms. There are 4 programs that are used for different tasks. Every program is standalone and consists of one file, which contains HTML (markip), CSS (styles) and JS (logic). Programs will be also named as `tools`.
+
+---
+
+## Programs in package
+
+- **Audio file generator**: a tool that generates sound wave of sine type based on 5 parameters and writes it to `.wav` file, which contains raw, uncompressed audio. `Required parameters`:
+    - sample rate (Hz);
+    - duration (s);
+    - level (dB);
+    - two frequency points:
+        - initial (Hz);
+        - final (Hz).
+
+- **Frequency generator**: a tool that generates sound wave, but after generating sound wave, it reproduces sound in real time. Also you can adjust channels balance (-1 - all output sound plays from the left speaker; +1 - all output sound plays from the right speaker). `Supported wave types`:
+    - sine;
+    - square;
+    - sawtooth;
+    - triangle.
+
+- **Password generator**: a tool that generates passwords based on 3 parameters:
+    - length (from `16` to `1048576` chars), should be multiple of hyphens interval;
+    - charset (default: `abcdefghijklmnopqrstuvwxyz0123456789`, but it can be changed);
+    - hyphens interval (default: `8`, but it can be changed). 
+Password copying is supported.
+
+- **Photo viewer**: a tool that helps to view photos. `It displays two parameters`:
+    - scale (%) - can be changed;
+    - resolution (px). 
+Only images extensions are supported (e.g. `png`, `jpg`, `svg`, `ico`, `apng`, `avif`, `webp`, etc.).
+
+## Security
+
+There is a `security` folder in projects structure. It contains an archive and an `.asc` file - digital signature. To check archive originality, you can download archive, `.asc` file and use the next command in Bash/WSL console: `gpg --verify archive.7z.asc archive.7z` - first parameter is a digital signature (`.asc` file), second parameter is an archive (`.zip`, `.7z`, `.rar`, etc.).
+
+## License
+
+This project is licensed under the MIT license. See the `LICENSE` file in root directory for details.
