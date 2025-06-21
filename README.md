@@ -14,7 +14,7 @@ Package of webprograms. There are 4 programs that are used for different tasks. 
         - initial (Hz);
         - final (Hz).
 
-- **Frequency generator**: a tool that generates sound wave, but after generating sound wave, it reproduces sound in real time. Also you can adjust channels balance (+1 (L) - all output sound plays from the left speaker; 0 (LR) - channels balance (level is equal in both channels); +1 (R) - all output sound plays from the right speaker). `Supported wave types`:
+- **Frequency generator**: a tool that generates sound wave, but after generating sound wave, it reproduces sound in real time. Also you can adjust channels balance (+1 (L) - all output sound plays from the left speaker; 0 (LR) - channels balance (level is equal in both channels (speakers)); +1 (R) - all output sound plays from the right speaker). `Supported wave types`:
     - sine;
     - square;
     - sawtooth;
