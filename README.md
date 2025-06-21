@@ -38,3 +38,7 @@ There is a `security` folder in projects structure. It contains an archive and a
 ## License
 
 This project is licensed under the MIT license. See the `LICENSE` file in root directory for details.
+
+---
+
+*2025, author: mnc1337*
