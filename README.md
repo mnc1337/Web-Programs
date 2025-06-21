@@ -1,6 +1,6 @@
 # Web-Programs
 
-Package of webprograms. There are 4 programs that are used for different tasks. Every program is standalone and consists of one file, which contains HTML (markip), CSS (styles) and JS (logic). Programs will be also named as `tools`.
+Package of webprograms. There are 4 programs that are used for different tasks. Every program is standalone and consists of one file, which contains HTML (markup), CSS (styles) and JS (logic). Programs will be also named as `tools`.
 
 ---
 
