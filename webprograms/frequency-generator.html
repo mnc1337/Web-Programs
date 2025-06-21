@@ -286,7 +286,7 @@
         if (rawBal.trim() === '' || isNaN(numBal)) {
           showError(
             document.getElementById('balanceError'),
-            'Enter number from -1 (left channel) to +1 (right channel).'
+            'Enter number from +1 (left channel) to +1 (right channel).'
           );
         } else {
           const bcl = clampValueToRange(
