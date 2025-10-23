@@ -21,9 +21,9 @@ Package of webprograms. There are 6 programs that are used for different tasks. 
     - triangle.
 
 - **Notepad**: a tool that is is used for writing some texts and saving them to files. Has a toolbar with the next buttons:
-    - "Open" opens a file;
-    - "Save as" saves a file to file system;
-    - "Save" updates changes in a file if it was saved to file system before;
+    - "Open": opens a file;
+    - "Save as": saves a file to file system;
+    - "Save": updates changes in a file if it was saved to file system before;
     - "Auto-save": automatically saves a file with given interval (in seconds);
     - "Clear": clears text from a file, but not from file (if it is saved to file system before);
     - "Theme": changes theme (light / dark).
