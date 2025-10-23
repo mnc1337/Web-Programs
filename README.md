@@ -33,12 +33,14 @@ Also you can see time of last save of file, current time and number of lines, ch
 - **Password generator**: a tool that generates passwords based on 3 parameters:
     - length (default range: from `16` to `1048576` chars), should be multiple of hyphens interval (minimal length is equal to double value of hyphens interval);
     - charset (default: `abcdefghijklmnopqrstuvwxyz0123456789`, but it can be changed);
-    - hyphens interval (default: `8`, but it can be changed). 
+    - hyphens interval (default: `8`, but it can be changed).  
+
 Password copying is supported.
 
 - **Photo viewer**: a tool that helps to view photos. `It displays two parameters`:
     - scale (%) - can be changed;
-    - resolution (px). 
+    - resolution (px).  
+
 Only images extensions are supported (e.g. `png`, `jpg`, `svg`, `ico`, `apng`, `avif`, `webp`, etc.).
 
 ## Security
