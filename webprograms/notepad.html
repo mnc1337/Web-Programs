@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Notepad</title>
+
+    <style>
+        :root {
+            --bg: #272728;
+            --text: #f5f5f5;
+            --panel-bg: #1F2021;
+            --border: #474747;
+            --btn-bg: #474747;
+            --btn-hover: #696969;
+            --padding: 8px;
+            --radius: 6px;
+            --font: 16px/1.4 "Arial", sans-serif;
+            --btn-height: 36px;
+        }
+
+        body.light {
+            --bg: #f4f4f4;
+            --text: #222;
+            --panel-bg: #fff;
+            --border: #ccc;
+            --btn-bg: #eee;
+            --btn-hover: #ddd;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            font: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            transition: background .25s, color .25s;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: var(--padding);
+        }
+
+        h1 {
+            text-align: center;
+            margin: 0 0 var(--padding);
+            font-weight: 600;
+        }
+
+        .icon {
+            width: 20px;
+            height: 20px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            vector-effect: non-scaling-stroke;
+            margin-right: 8px;
+            flex: 0 0 auto;
+        }
+
+        .toolbar button,
+        .auto-label {
+            display: inline-flex;
+            align-items: center;
+            height: var(--btn-height);
+            padding: 0 12px;
+            font-size: 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--btn-bg);
+            color: var(--text);
+            user-select: none;
+            transition: background .18s, border-color .18s;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        .toolbar button:disabled,
+        .auto-label.disabled {
+            opacity: .5;
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .toolbar button:not(:disabled):hover,
+        .auto-label:not(.disabled):hover {
+            background: var(--btn-hover);
+            border-color: var(--btn-hover);
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: var(--padding);
+            margin-bottom: var(--padding);
+        }
+
+        .auto-label {
+            gap: 8px;
+        }
+
+        .auto-save-text {
+            cursor: pointer;
+        }
+
+        .auto-label input[type="checkbox"] {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+        .interval-group {
+            display: inline-flex;
+            align-items: center;
+            margin-left: 10px;
+            gap: 6px;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+            -webkit-appearance: none;
+            margin: 0;
+            width: 42px;
+            padding: 4px;
+            height: 28px;
+            font-size: 14px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--panel-bg);
+            color: var(--text);
+            cursor: text;
+        }
+
+        input[type="number"]:invalid {
+            border-color: #f28b82;
+            background-color: rgba(242, 139, 130, 0.06);
+        }
+
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            margin-bottom: var(--padding);
+            padding: 0 var(--padding);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .status-left {
+            flex: 1;
+            text-align: left;
+            font-style: italic;
+            font-weight: 600;
+        }
+
+        .status-right {
+            flex: 1;
+            text-align: right;
+            opacity: .7;
+            font-style: italic;
+        }
+
+        .status-right .sep {
+            margin: 0 8px;
+            user-select: none;
+        }
+
+        .current-time {
+            pointer-events: none;
+            user-select: none;
+        }
+
+        textarea {
+            flex: 1;
+            width: 100%;
+            min-height: 160px;
+            background: var(--panel-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: var(--padding);
+            resize: none;
+            font-size: 16px;
+            line-height: 1.4;
+            transition: background .2s, color .2s, border-color .2s;
+        }
+
+        textarea::placeholder {
+            font-style: italic;
+        }
+
+        .stats {
+            margin-top: var(--padding);
+            text-align: right;
+            font-size: 14px;
+            opacity: .7;
+            font-style: italic;
+        }
+
+        .toolbar button:focus-visible,
+        .auto-label:focus-within {
+            outline: 3px solid rgba(120, 170, 255, 0.18);
+            outline-offset: 2px;
+        }
+
+        @media (max-width:480px) {
+            .toolbar {
+                justify-content: center;
+            }
+
+            .toolbar button,
+            .auto-label {
+                flex: 1 1 45%;
+                justify-content: center;
+            }
+
+            .auto-label .interval-group input {
+                width: 44px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Notepad</h1>
+
+        <div class="toolbar" role="toolbar" aria-label="Toolbar">
+            <button id="openBtn" type="button" title="Open" aria-label="Open file">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M3 7h5l2 3h9a3 3 0 0 1 3 3v4a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V8a1 1 0 0 1 1-1z"></path>
+                </svg>
+                Open
+            </button>
+
+            <button id="saveAsBtn" type="button" title="Save as" aria-label="Save as">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <path d="M7 3v5h8"></path>
+                    <path d="M12 13v5"></path>
+                    <path d="M9 16l3 3 3-3"></path>
+                </svg>
+                Save as
+            </button>
+
+            <button id="saveBtn" type="button" title="Save" aria-label="Save" disabled>
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <path d="M7 3v5h8"></path>
+                    <path d="M17 21v-8H7v8"></path>
+                </svg>
+                Save
+            </button>
+
+            <div class="auto-label disabled" id="autoLabel" title="Auto-save" role="button" aria-label="Auto-save">
+                <input type="checkbox" id="autoSaveChk" aria-label="Auto-save" disabled>
+                <span class="auto-save-text">Auto-save</span>
+                <span class="interval-group" aria-label="Auto-save interval">
+                    <span>Interval:</span>
+                    <input type="number" id="intervalInput" min="0.1" max="1000" step="0.1" value="5.0"
+                        inputmode="decimal" title="Auto-save interval (sec)" required disabled>
+                    <span>sec</span>
+                </span>
+            </div>
+
+            <button id="clearBtn" type="button" title="Clear" aria-label="Clear">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+                Clear
+            </button>
+
+            <button id="themeBtn" type="button" title="Toggle theme" aria-label="Toggle theme">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" id="themeIcon">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+                <span class="theme-label">Theme</span>
+            </button>
+        </div>
+
+        <div class="status-bar" aria-live="polite">
+            <div class="status-left">
+                <div class="file-name" id="fileName">— untitled —</div>
+            </div>
+            <div class="status-right">
+                <span class="last-save" id="lastSave">last save: —</span>
+                <span class="sep">|</span>
+                <span class="current-time" id="currentTime" tabindex="-1"
+                    style="user-select:none; pointer-events:none;">
+                    Time: —
+                </span>
+            </div>
+        </div>
+
+        <textarea id="text" placeholder="Enter text..." aria-label="Text"></textarea>
+
+        <div class="stats">
+            Lines: <span id="lineCount">0</span> |
+            Characters: <span id="charCount">0</span> |
+            Words: <span id="wordCount">0</span>
+        </div>
+    </div>
+
+    <script>
+
+        const textArea = document.getElementById('text');
+        const openBtn = document.getElementById('openBtn');
+        const saveAsBtn = document.getElementById('saveAsBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const autoChk = document.getElementById('autoSaveChk');
+        const intervalInp = document.getElementById('intervalInput');
+        const themeBtn = document.getElementById('themeBtn');
+        const fileNameEl = document.getElementById('fileName');
+        const lastSaveEl = document.getElementById('lastSave');
+        const currentTimeEl = document.getElementById('currentTime');
+        const statsEls = {
+            lines: document.getElementById('lineCount'),
+            chars: document.getElementById('charCount'),
+            words: document.getElementById('wordCount')
+        };
+        const autoLabel = document.getElementById('autoLabel');
+
+        let fileHandle = null;
+        let fileNameStr = null;
+        let autoTimer = null;
+        let isDirty = false;
+        let isSaving = false;
+
+        const hasFileSystemAccess = ('showOpenFilePicker' in window) && ('showSaveFilePicker' in window);
+
+
+        function fmtTime(date) {
+            return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+
+        function updateStats() {
+            const txt = textArea.value;
+            statsEls.lines.textContent = txt.length ? txt.split('\n').length : 0;
+            statsEls.chars.textContent = txt.length;
+            statsEls.words.textContent = txt.trim() ? txt.trim().split(/\s+/).length : 0;
+        }
+
+        function updateFileName() {
+            const name = fileNameStr || (fileHandle && fileHandle.name) || '— untitled —';
+            fileNameEl.textContent = isDirty ? (name + ' *') : name;
+        }
+
+        function markSaved() {
+            isDirty = false;
+            updateFileName();
+            lastSaveEl.textContent = 'last save: ' + fmtTime(new Date());
+        }
+
+
+        const SUN_ICON_WITH_ID = `
+<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" id="themeIcon">
+  <circle cx="12" cy="12" r="4"></circle>
+  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+</svg>`;
+
+        const MOON_ICON_WITH_ID = `
+<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" id="themeIcon">
+  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+</svg>`;
+
+        const setTheme = (mode) => {
+            const isLight = mode === 'light';
+            document.body.classList.toggle('light', isLight);
+            const iconEl = document.getElementById('themeIcon');
+            if (iconEl) {
+                iconEl.outerHTML = isLight ? SUN_ICON_WITH_ID : MOON_ICON_WITH_ID;
+            }
+            try {
+                localStorage.setItem('notepad_theme', isLight ? 'light' : 'dark');
+            } catch { }
+        };
+
+        const toggleTheme = () => {
+            const isLight = document.body.classList.contains('light');
+            setTheme(isLight ? 'dark' : 'light');
+        };
+
+        async function saveAsFallback(suggestedName = 'note.txt') {
+            const blob = new Blob([textArea.value], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = suggestedName;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            fileNameStr = suggestedName;
+            markSaved();
+        }
+
+        async function saveToFile() {
+            if (isSaving) return;
+            isSaving = true;
+            try {
+                if (fileHandle && typeof fileHandle.createWritable === 'function') {
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(textArea.value);
+                    await writable.close();
+                    fileNameStr = fileHandle.name || fileNameStr;
+                    markSaved();
+                } else {
+                    await saveAsFallback(fileNameStr || 'note.txt');
+                }
+            } catch (e) {
+                if (e && e.name !== 'AbortError') {
+                    console.warn('Save error:', e);
+                }
+            } finally {
+                isSaving = false;
+            }
+        }
+
+        async function openFileFallback() {
+            return new Promise(resolve => {
+                const inp = document.createElement('input');
+                inp.type = 'file';
+                inp.accept = '.txt,text/plain';
+                inp.style.position = 'fixed';
+                inp.style.left = '-9999px';
+                inp.style.top = '-9999px';
+                document.body.appendChild(inp);
+
+                inp.onchange = async () => {
+                    try {
+                        const f = inp.files && inp.files[0];
+                        if (f) {
+                            const t = await f.text();
+                            textArea.value = t;
+                            fileHandle = null;
+                            fileNameStr = f.name;
+                            isDirty = false;
+                            updateStats();
+                            updateFileName();
+                            markSaved();
+                            saveBtn.disabled = false;
+                            autoChk.disabled = true;
+                            intervalInp.disabled = true;
+                            updateAutoLabelState();
+                        }
+                    } finally {
+                        inp.remove();
+                        resolve();
+                    }
+                };
+
+                inp.click();
+            });
+        }
+
+        async function openFile() {
+            try {
+                if (hasFileSystemAccess) {
+                    const pick = await showOpenFilePicker({
+                        types: [{ description: 'Text', accept: { 'text/plain': ['.txt'] } }]
+                    });
+                    const handle = Array.isArray(pick) ? pick[0] : pick;
+                    if (!handle) return;
+                    fileHandle = handle;
+                    const file = await handle.getFile();
+                    textArea.value = await file.text();
+                    fileNameStr = file.name;
+                    isDirty = false;
+                    updateStats();
+                    updateFileName();
+                    markSaved();
+                    saveBtn.disabled = false;
+                    autoChk.disabled = false;
+                    intervalInp.disabled = false;
+                    updateAutoLabelState();
+                } else {
+                    await openFileFallback();
+                }
+            } catch (e) {
+                if (e && e.name !== 'AbortError') console.warn(e);
+            }
+        }
+
+        async function saveAs() {
+            try {
+                if (hasFileSystemAccess) {
+                    fileHandle = await showSaveFilePicker({
+                        suggestedName: fileNameStr || 'note.txt',
+                        types: [{ description: 'Text', accept: { 'text/plain': ['.txt'] } }]
+                    });
+                    saveBtn.disabled = false;
+                    autoChk.disabled = false;
+                    intervalInp.disabled = false;
+                    updateAutoLabelState();
+                    await saveToFile();
+                } else {
+                    await saveAsFallback(fileNameStr || 'note.txt');
+                    saveBtn.disabled = false;
+                    autoChk.disabled = true;
+                    intervalInp.disabled = true;
+                    updateAutoLabelState();
+                }
+            } catch (e) {
+                if (e && e.name !== 'AbortError') console.warn(e);
+            }
+        }
+
+        function validateInterval() {
+            const raw = (intervalInp.value || '').trim();
+
+            if (intervalInp.disabled) {
+                intervalInp.setCustomValidity('');
+                return;
+            }
+
+            if (!raw) {
+                intervalInp.setCustomValidity('Enter interval (sec).');
+                intervalInp.reportValidity();
+                return;
+            }
+
+            const normalized = raw.replace(',', '.');
+            const n = Number(normalized);
+            const min = Number(intervalInp.min || 0);
+            const max = Number(intervalInp.max || 1000);
+
+            if (Number.isNaN(n)) {
+                intervalInp.setCustomValidity('Enter a number (comma or dot allowed).');
+            } else if (n < min) {
+                intervalInp.setCustomValidity(`Enter a number ≥ ${min}.`);
+            } else if (n > max) {
+                intervalInp.setCustomValidity(`Enter a number ≤ ${max}.`);
+            } else {
+                intervalInp.setCustomValidity('');
+            }
+
+            intervalInp.reportValidity();
+        }
+
+        function startAutoSave() {
+            stopAutoSave();
+            if (!autoChk.checked) return;
+
+            validateInterval();
+            if (!intervalInp.checkValidity()) return;
+
+            const raw = (intervalInp.value || '').trim();
+            const normalized = raw.replace(',', '.');
+            let n = Number(normalized);
+
+            const min = Number(intervalInp.min || 0);
+            const max = Number(intervalInp.max || 1000);
+
+            if (Number.isNaN(n)) return;
+            if (n < min || n > max) return;
+
+            const ms = Math.max(100, Math.round(n * 1000));
+
+            if (!(fileHandle && typeof fileHandle.createWritable === 'function')) {
+                autoChk.checked = false;
+                updateAutoLabelState();
+                return;
+            }
+
+            autoTimer = setInterval(async () => {
+                try {
+                    if (!isDirty || isSaving) return;
+                    await saveToFile();
+                } catch (e) {
+                    console.warn('Auto-save error:', e);
+                }
+            }, ms);
+        }
+
+        function stopAutoSave() {
+            if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+        }
+
+        function updateAutoLabelState() {
+            if (autoChk.disabled || intervalInp.disabled) {
+                autoLabel.classList.add('disabled');
+            } else {
+                autoLabel.classList.remove('disabled');
+            }
+        }
+
+
+        function onInput() {
+            isDirty = true;
+            updateFileName();
+            updateStats();
+        }
+
+        function onClear() {
+            if (confirm('Clear text?')) {
+                textArea.value = '';
+                onInput();
+            }
+        }
+
+        function updateClock() {
+            currentTimeEl.textContent = 'Time: ' + fmtTime(new Date());
+        }
+
+        if (textArea) textArea.addEventListener('input', onInput);
+        if (openBtn) openBtn.addEventListener('click', openFile);
+        if (saveBtn) saveBtn.addEventListener('click', async () => {
+            if (fileHandle && typeof fileHandle.createWritable === 'function') {
+                await saveToFile();
+            } else {
+                await saveAs();
+            }
+        });
+        if (saveAsBtn) saveAsBtn.addEventListener('click', saveAs);
+        if (clearBtn) clearBtn.addEventListener('click', onClear);
+
+        if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
+
+        if (autoChk) {
+            autoChk.addEventListener('click', e => e.stopPropagation());
+            autoChk.addEventListener('change', () => {
+                if (autoChk.checked) startAutoSave(); else stopAutoSave();
+                updateAutoLabelState();
+            });
+        }
+
+        if (intervalInp) intervalInp.addEventListener('input', () => {
+            validateInterval();
+            if (autoChk.checked) startAutoSave();
+        });
+
+        if (intervalInp) {
+            const stop = e => e.stopPropagation();
+            intervalInp.addEventListener('click', stop);
+            intervalInp.addEventListener('mousedown', stop);
+            intervalInp.addEventListener('mouseup', stop);
+            intervalInp.addEventListener('touchstart', stop, { passive: true });
+            intervalInp.addEventListener('touchend', stop, { passive: true });
+            intervalInp.addEventListener('keydown', stop);
+        }
+
+        if (autoLabel) {
+            autoLabel.addEventListener('click', e => {
+                const t = e.target;
+                if (t === intervalInp || t.closest('.interval-group')) return;
+                if (t === autoChk || t.closest('input[type="checkbox"]')) return;
+                if (!autoChk.disabled) {
+                    autoChk.checked = !autoChk.checked;
+                    if (autoChk.checked) startAutoSave(); else stopAutoSave();
+                    updateAutoLabelState();
+                }
+            });
+        }
+
+        window.addEventListener('beforeunload', e => {
+            if (isDirty) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        updateStats();
+        updateFileName();
+        updateAutoLabelState();
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        (() => {
+            let init;
+            try {
+                const saved = localStorage.getItem('notepad_theme');
+                if (saved === 'light' || saved === 'dark') {
+                    init = saved;
+                } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+                    init = 'light';
+                } else {
+                    init = 'dark';
+                }
+            } catch {
+                init = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+            }
+            setTheme(init);
+        })();
+
+        if (!hasFileSystemAccess) {
+            autoChk.disabled = true;
+            intervalInp.disabled = true;
+            updateAutoLabelState();
+            console.info('File System Access API is unavailable — using fallback (input file / download). Auto-save disabled.');
+        }
+
+    </script>
+</body>
+
+</html>

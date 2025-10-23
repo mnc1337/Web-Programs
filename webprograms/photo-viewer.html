@@ -2,285 +2,487 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Photo viewer</title>
-  <style>
-    body {
-        font-family: Arial, sans-serif;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        margin: 0;
-        background-color: #272728;
-        overflow: hidden;
-    }
-    button {
-        padding: 10px 20px;
-        font-size: 16px;
-        cursor: pointer;
-        background-color: #474747;
-        color: #f5f5f5;
-        border: none;
-        border-radius: 5px;
-        transition: background-color;
-        margin: 10px;
-    }
-    button:hover { background-color: #696969; }
-    #drop-area {
-        border: 2px dashed #999;
-        width: 95%; height: 95%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-        background-color: #1F2021;
-        text-align: center;
-        overflow: hidden;
-    }
-    #drop-area.hover { background-color: #e0e0e0; }
-    #image-container {
-        width: 100%; height: 100%;
-        position: relative;
-        overflow: hidden;
-        cursor: grab;
-    }
-    img {
-        position: absolute; top: 0; left: 0;
-        max-width: none; max-height: none;
-        transform-origin: left top;
-    }
-    #info-container {
-        display: flex;
-        align-items: center;
-        gap: 40px;
-        margin: 10px;
-        color: #f5f5f5;
-        font-size: 16px;
-    }
-    #scale-input {
-        width: 50px;
-        padding: 5px;
-        font-size: 16px;
-        border: 2px solid #474747;
-        border-radius: 5px;
-        text-align: center;
-        color: #f5f5f5;
-        background-color: #474747;
-    }
-    #scale-input:focus { border-color: #696969; outline: none; }
-    /* уборка стрелок в поле ввода масштаба */
-    #scale-input::-webkit-inner-spin-button,
-    #scale-input::-webkit-outer-spin-button {
-        -webkit-appearance: none; margin: 0;
-    }
-    .centered-text {
-        position: absolute;
-        font-size: 24px;
-        color: #999;
-        pointer-events: none;
-        z-index: 1;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Images view</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #272728;
+            overflow: hidden;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #474747;
+            color: #f5f5f5;
+            border: none;
+            border-radius: 5px;
+            transition: background-color;
+            margin: 10px;
+        }
+
+        button:hover {
+            background-color: #696969;
+        }
+
+        #drop-area {
+            border: 2px dashed #999;
+            width: 95%;
+            height: 95%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background-color: #1F2021;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        #drop-area.hover {
+            background-color: #2b2b2c;
+        }
+
+        #image-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            cursor: grab;
+            touch-action: none;
+        }
+
+        img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            max-width: none;
+            max-height: none;
+            transform-origin: 0 0;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        #info-container {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            margin: 10px;
+            color: #f5f5f5;
+            font-size: 16px;
+        }
+
+        #scale-input {
+            width: 50px;
+            padding: 5px;
+            font-size: 16px;
+            border: 2px solid #474747;
+            border-radius: 5px;
+            text-align: center;
+            color: #f5f5f5;
+            background-color: #474747;
+        }
+
+        #scale-input:focus {
+            border-color: #696969;
+            outline: none;
+        }
+
+        #scale-input::-webkit-inner-spin-button,
+        #scale-input::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        #scale-input {
+            -moz-appearance: textfield;
+        }
+
+        .centered-text {
+            position: absolute;
+            font-size: 24px;
+            color: #999;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .visually-hidden {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            padding: 0 !important;
+            margin: -1px !important;
+            overflow: hidden !important;
+            clip: rect(0 0 0 0) !important;
+            white-space: nowrap !important;
+            border: 0 !important;
+        }
+    </style>
 </head>
 
 <body>
-  <div id="controls">
-      <button id="open-button">Open file</button>
-  </div>
-  <div id="drop-area">
-      <p id="info" class="centered-text">Drag image here</p>
-      <div id="image-container">
-          <img id="image" src="" alt="" style="display: none;">
-      </div>
-  </div>
-  <div id="info-container">
-      <div id="scale-info">
-          <span>Scale:</span>
-          <input type="number" id="scale-input" value="" min="10" max="1000" step="1">
-          <span>%</span>
-      </div>
-      <div id="resolution-info">
-          <span>Resolution:</span>
-          <span id="resolution-output">—</span>
-      </div>
-  </div>
-  <input type="file" id="file-input" accept="image/*" style="display: none;">
-  <script>
-    const dropArea = document.getElementById('drop-area');
-    const fileInput = document.getElementById('file-input');
-    const openButton = document.getElementById('open-button');
-    const image = document.getElementById('image');
-    const scaleInput = document.getElementById('scale-input');
-    const imageContainer = document.getElementById('image-container');
-    const infoText = document.getElementById('info');
-    const resolutionOutput = document.getElementById('resolution-output');
-    
-    let scale = 1;
-    let isDragging = false;
-    let startX, startY, scrollLeft, scrollTop;
-    let isLoading = false;
-    
-    image.addEventListener('error', () => {
-        if (!isLoading) return;
-        isLoading = false;
-            alert('Image cannot be displayed - maybe, it is corrupted.');
-        resetUserInterface();
-    });
-    
-    image.addEventListener('load', () => {
-        if (!isLoading) return;
-        isLoading = false;
-        resetScale();
-        updateInfo();
-    });
-    
-    function resetUserInterface() {
-        image.style.display = 'none';
-        image.removeAttribute('src');
-        image.style.transform = '';
-        infoText.textContent = 'Drag image here';
-        infoText.style.display = 'block';
-        scaleInput.value = '';
-        resolutionOutput.textContent = '—';
-    }
-    
-    function resetScale() {
-        scale = 1;
-        image.style.transform = `scale(${scale})`;
-    }
-    
-    function updateInfo(updateInput = true) {
-        if (!image.src || !image.naturalWidth) return;
-        const w = image.naturalWidth;
-        const h = image.naturalHeight;
-        const dispW = image.getBoundingClientRect().width;
-        scale = dispW / w;
-        if (updateInput) scaleInput.value = Math.round(scale * 100);
-        resolutionOutput.textContent = `${w}×${h}`;
-    }
-    
-    openButton.addEventListener('click', () => fileInput.click());
-    
-    fileInput.addEventListener('change', e => {
-        const file = e.target.files[0];
-        if (!file) return;
-        loadFile(file);
-    });
-    
-    function loadFile(file) {
-        if (!file) return;
-    
-        if (!file.type.startsWith('image/')) {
-                alert('The file is not an image or is not supported.');
-            return;
-        }
-    
-        const reader = new FileReader();
-    
-        reader.onerror = () => {
-                alert('Cannot read the file - maybe, it is corrupted.');
-            resetUserInterface();
-        };
-    
-        reader.onload = e => {
-            isLoading = true;
-            image.src = e.target.result;
-            image.style.display = 'block';
-            infoText.style.display = 'none';
-    
-            if (image.decode) {
-                image.decode().catch(() => {
-                    const ev = new Event('error');
-                    image.dispatchEvent(ev);
-                });
+    <h1 class="visually-hidden">Image viewer</h1>
+
+    <div id="controls" role="toolbar" aria-label="Image controls">
+        <button id="open-button" type="button" title="Open image file" aria-label="Open image file">Open file</button>
+    </div>
+
+    <div id="drop-area" role="region" aria-label="Drop area for image files">
+        <p id="info" class="centered-text" role="status" aria-live="polite">Drag image here</p>
+        <div id="image-container" aria-label="Image viewport">
+            <img id="image" src="" alt="" style="display: none;">
+        </div>
+    </div>
+
+    <div id="info-container" aria-live="polite">
+        <div id="scale-info">
+            <label for="scale-input">Scale:</label>
+            <input type="number" id="scale-input" value="" min="10" max="1000" step="1"
+                aria-label="Image scale in percent">
+            <span>%</span>
+        </div>
+        <div id="resolution-info">
+            <span>Resolution:</span>
+            <span id="resolution-output" aria-live="polite">—</span>
+        </div>
+    </div>
+
+    <input type="file" id="file-input" accept="image/*" style="display: none;" aria-label="Choose image file">
+
+    <script>
+        (() => {
+            'use strict';
+
+            const dropArea = document.getElementById('drop-area');
+            const fileInput = document.getElementById('file-input');
+            const openButton = document.getElementById('open-button');
+            const image = document.getElementById('image');
+            const scaleInput = document.getElementById('scale-input');
+            const imageContainer = document.getElementById('image-container');
+            const infoText = document.getElementById('info');
+            const resolutionOutput = document.getElementById('resolution-output');
+
+            let scale = 1;
+            let translateX = 0;
+            let translateY = 0;
+            let isDragging = false;
+            let startDragX = 0, startDragY = 0, startTranslateX = 0, startTranslateY = 0;
+            let fitScale = 1;
+            let isFitted = true;
+            let lastMouseX = null, lastMouseY = null;
+
+            const MIN_SCALE = 0.1;
+            const MAX_SCALE = 10;
+            const PERCENT = 100;
+
+
+            function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
+
+            function applyTransform() {
+                image.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
             }
-        };
-    
-        reader.readAsDataURL(file);
-    }
-    
-    dropArea.addEventListener('dragover', e => {
-        e.preventDefault();
-        dropArea.classList.add('hover');
-    });
-    
-    dropArea.addEventListener('dragleave', () => dropArea.classList.remove('hover'));
-    dropArea.addEventListener('drop', e => {
-        e.preventDefault();
-        dropArea.classList.remove('hover');
-        const file = e.dataTransfer.files[0];
-        if (file) loadFile(file);
-    });
-    
-    document.addEventListener('paste', e => {
-        for (const item of e.clipboardData.items) {
-            if (item.kind === 'file') {
-                loadFile(item.getAsFile());
+
+            function clampTranslate() {
+                if (!image.naturalWidth) return;
+                const cw = imageContainer.clientWidth;
+                const ch = imageContainer.clientHeight;
+                const iw = image.naturalWidth * scale;
+                const ih = image.naturalHeight * scale;
+
+                if (iw <= cw) translateX = (cw - iw) / 2;
+                else {
+                    const minX = cw - iw;
+                    translateX = Math.min(0, Math.max(minX, translateX));
+                }
+
+                if (ih <= ch) translateY = (ch - ih) / 2;
+                else {
+                    const minY = ch - ih;
+                    translateY = Math.min(0, Math.max(minY, translateY));
+                }
             }
-        }
-    });
-    
-    imageContainer.addEventListener('wheel', e => {
-        if (!image.src) return;
-        e.preventDefault();
-        const zoom = 1.1;
-        const rect = image.getBoundingClientRect();
-        const offX = e.clientX - rect.left;
-        const offY = e.clientY - rect.top;
-        const newScale = Math.min(Math.max(e.deltaY < 0 ? scale * zoom : scale / zoom, 0.1), 10);
-        const ratio = newScale / scale;
-        scale = newScale;
-        image.style.transform = `scale(${scale})`;
-        imageContainer.scrollLeft += offX * (ratio - 1);
-        imageContainer.scrollTop += offY * (ratio - 1);
-        updateInfo();
-    });
-    
-    scaleInput.addEventListener('change', () => {
-        const raw = scaleInput.value;
-        const num = parseFloat(raw);
-        const min = parseFloat(scaleInput.min);
-        const max = parseFloat(scaleInput.max);
-        if (isNaN(num) || num < min || num > max) {
-                alert(`Unacceptable scale value. Enter number from ${min} to ${max}.`);
-            updateInfo();
-            return;
-        }
-        scale = num / 100;
-        image.style.transform = `scale(${scale})`;
-        updateInfo(false);
-    });
-    
-    imageContainer.addEventListener('mousedown', e => {
-        isDragging = true;
-        imageContainer.style.cursor = 'grabbing';
-        startX = e.pageX;
-        startY = e.pageY;
-        scrollLeft = imageContainer.scrollLeft;
-        scrollTop = imageContainer.scrollTop;
-    });
-    
-    document.addEventListener('mouseup', () => {
-        if (isDragging) {
-            isDragging = false;
-            imageContainer.style.cursor = 'grab';
-        }
-    });
-    
-    document.addEventListener('mousemove', e => {
-        if (!isDragging) return;
-        e.preventDefault();
-        const x = e.pageX;
-        const y = e.pageY;
-        imageContainer.scrollLeft = scrollLeft - (x - startX);
-        imageContainer.scrollTop = scrollTop - (y - startY);
-    });
-    
-    image.addEventListener('dragstart', e => e.preventDefault());
-  </script>
+
+            function updateInfo(updateInput = true) {
+                if (!image.src || !image.naturalWidth) {
+                    resolutionOutput.textContent = '—';
+                    if (updateInput) { scaleInput.value = ''; scaleInput.disabled = true; }
+                    return;
+                }
+                if (updateInput) scaleInput.value = Math.round(scale * PERCENT);
+                resolutionOutput.textContent = `${image.naturalWidth}×${image.naturalHeight}`;
+                scaleInput.disabled = false;
+            }
+
+            function fitImage() {
+                if (!image.naturalWidth) return;
+
+                const cw = imageContainer.clientWidth;
+                const ch = imageContainer.clientHeight;
+
+                if (cw <= 0 || ch <= 0) return;
+
+                const fitScaleUncapped = Math.min(cw / image.naturalWidth, ch / image.naturalHeight);
+
+                fitScale = clamp(fitScaleUncapped, MIN_SCALE, MAX_SCALE);
+                scale = fitScale;
+
+                translateX = (cw - image.naturalWidth * scale) / 2;
+                translateY = (ch - image.naturalHeight * scale) / 2;
+
+                isFitted = true;
+
+                clampTranslate();
+                applyTransform();
+                updateInfo();
+            }
+
+            function zoomAt(factor, clientX, clientY) {
+                if (!image.naturalWidth) return;
+                const rect = imageContainer.getBoundingClientRect();
+                const offsetX = clientX - rect.left;
+                const offsetY = clientY - rect.top;
+
+                const newScale = clamp(scale * factor, MIN_SCALE, MAX_SCALE);
+                const ratio = newScale / scale;
+
+                translateX = offsetX - (offsetX - translateX) * ratio;
+                translateY = offsetY - (offsetY - translateY) * ratio;
+
+                scale = newScale;
+                isFitted = false;
+                clampTranslate();
+                applyTransform();
+                updateInfo();
+            }
+
+            function isTypingInField() {
+                const el = document.activeElement;
+                if (!el) return false;
+                const tag = el.tagName;
+                return el.isContentEditable || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+            }
+
+            const ERROR_MSG = {
+                notImage: 'Unable to open the file. The file is not an image.',
+                emptyFile: 'Unable to open the file. The file is empty.',
+                readError: 'Unable to read the file.',
+                loadError: 'Unable to display the image. The file may be corrupted.',
+                invalidResolution: 'Unable to display the image. Invalid image resolution.'
+            };
+
+            let isLoadingImage = false;
+
+            openButton.addEventListener('click', () => fileInput.click());
+
+            fileInput.addEventListener('change', e => {
+                const file = e.target.files && e.target.files[0];
+                if (file) loadFile(file);
+                e.target.value = '';
+            });
+
+            function sanitizeFileName(name) {
+                return (name || '').replace(/[<>:"/\\|?*]+/g, '_');
+            }
+
+            function loadFile(file) {
+                if (file.size === 0) {
+                    alert(ERROR_MSG.emptyFile);
+                    return;
+                }
+
+                if (!file.type || !file.type.startsWith('image/')) {
+                    alert(ERROR_MSG.notImage);
+                    return;
+                }
+
+                const reader = new FileReader();
+
+                reader.onerror = () => {
+                    alert(ERROR_MSG.readError);
+                    resetUI();
+                };
+
+                reader.onload = e => {
+                    isLoadingImage = true;
+                    image.src = e.target.result;
+                    image.alt = sanitizeFileName(file.name) || 'Loaded image';
+                    image.style.display = 'block';
+                    infoText.style.display = 'none';
+                };
+
+                reader.readAsDataURL(file);
+            }
+
+            image.addEventListener('load', () => {
+                if (!isLoadingImage) return;
+                isLoadingImage = false;
+
+                if (image.naturalWidth === 0 || image.naturalHeight === 0) {
+                    alert(ERROR_MSG.invalidResolution);
+                    resetUI();
+                    return;
+                }
+
+                fitImage();
+            });
+
+            image.addEventListener('error', () => {
+                if (!isLoadingImage) return;
+                isLoadingImage = false;
+                alert(ERROR_MSG.loadError);
+                resetUI();
+            });
+
+            function resetUI() {
+                image.src = '';
+                image.style.display = 'none';
+                infoText.style.display = 'block';
+                resolutionOutput.textContent = '—';
+                scaleInput.value = '';
+                scaleInput.disabled = true;
+                scale = 1;
+                translateX = 0;
+                translateY = 0;
+            }
+
+            dropArea.addEventListener('dragover', e => { e.preventDefault(); dropArea.classList.add('hover'); });
+            dropArea.addEventListener('dragleave', () => dropArea.classList.remove('hover'));
+            dropArea.addEventListener('drop', e => {
+                e.preventDefault();
+                dropArea.classList.remove('hover');
+                const file = e.dataTransfer.files && e.dataTransfer.files[0];
+                if (file) loadFile(file);
+            });
+            document.addEventListener('paste', e => {
+                const items = e.clipboardData && e.clipboardData.items || [];
+                for (const item of items) {
+                    if (item.kind === 'file') {
+                        const f = item.getAsFile();
+                        if (f) loadFile(f);
+                        break;
+                    }
+                }
+            });
+
+            imageContainer.addEventListener('wheel', e => {
+                if (!image.src) return;
+                e.preventDefault();
+                const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+                zoomAt(factor, e.clientX, e.clientY);
+            }, { passive: false });
+
+            imageContainer.addEventListener('pointerdown', e => {
+                if (!image.src) return;
+                imageContainer.setPointerCapture(e.pointerId);
+                isDragging = true;
+                startDragX = e.clientX;
+                startDragY = e.clientY;
+                startTranslateX = translateX;
+                startTranslateY = translateY;
+                imageContainer.style.cursor = 'grabbing';
+            });
+
+            imageContainer.addEventListener('pointermove', e => {
+                const rect = imageContainer.getBoundingClientRect();
+                if (
+                    e.clientX >= rect.left && e.clientX <= rect.right &&
+                    e.clientY >= rect.top && e.clientY <= rect.bottom
+                ) {
+                    lastMouseX = e.clientX;
+                    lastMouseY = e.clientY;
+                } else {
+                    lastMouseX = null;
+                    lastMouseY = null;
+                }
+
+                if (!isDragging) return;
+                translateX = startTranslateX + (e.clientX - startDragX);
+                translateY = startTranslateY + (e.clientY - startDragY);
+                clampTranslate();
+                applyTransform();
+            });
+
+            imageContainer.addEventListener('pointerup', e => {
+                if (!image.src) return;
+                isDragging = false;
+                try { imageContainer.releasePointerCapture(e.pointerId); } catch (err) { }
+                imageContainer.style.cursor = 'grab';
+            });
+            imageContainer.addEventListener('pointercancel', () => {
+                isDragging = false;
+                imageContainer.style.cursor = 'grab';
+            });
+
+            imageContainer.addEventListener('dblclick', e => {
+                if (!image.src) return;
+                if (Math.abs(scale - 1) > 0.05) {
+                    zoomAt(1 / scale, e.clientX, e.clientY);
+                } else {
+                    fitImage();
+                }
+            });
+
+            document.addEventListener('keydown', e => {
+                if (!image.src) return;
+
+                if (isTypingInField()) return;
+                if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+                const rect = imageContainer.getBoundingClientRect();
+                const zoomX = lastMouseX !== null ? lastMouseX : rect.left + rect.width / 2;
+                const zoomY = lastMouseY !== null ? lastMouseY : rect.top + rect.height / 2;
+
+                const key = e.key;
+                const code = e.code;
+
+                if (key === '+' || key === '=' || code === 'NumpadAdd') {
+                    e.preventDefault();
+                    zoomAt(1.1, zoomX, zoomY);
+                } else if (key === '-' || key === '_' || code === 'NumpadSubtract') {
+                    e.preventDefault();
+                    zoomAt(1 / 1.1, zoomX, zoomY);
+                } else if (key === '0' || code === 'Numpad0') {
+                    e.preventDefault();
+                    fitImage();
+                } else if (key === '1' || code === 'Numpad1') {
+                    e.preventDefault();
+                    zoomAt(1 / scale, zoomX, zoomY);
+                }
+            });
+
+            scaleInput.addEventListener('change', () => {
+                const num = Number(scaleInput.value);
+                if (Number.isNaN(num)) { updateInfo(); return; }
+                const targetScale = clamp(num / PERCENT, MIN_SCALE, MAX_SCALE);
+                const rect = imageContainer.getBoundingClientRect();
+                zoomAt(targetScale / scale, rect.left + rect.width / 2, rect.top + rect.height / 2);
+            });
+
+            scaleInput.addEventListener('keydown', e => {
+                if (e.key === 'Enter') scaleInput.blur();
+            });
+
+            image.addEventListener('dragstart', e => e.preventDefault());
+
+            window.addEventListener('resize', () => {
+                if (!image.naturalWidth) return;
+                if (isFitted) fitImage();
+                else { clampTranslate(); applyTransform(); }
+            });
+
+            scaleInput.disabled = true;
+            updateInfo(true);
+
+        })();
+    </script>
 </body>
 
 </html>
