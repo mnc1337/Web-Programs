@@ -28,7 +28,7 @@ Package of webprograms. There are 6 programs that are used for different tasks. 
     - "Clear": clears text from a file, but not from file (if it is saved to file system before);
     - "Theme": changes theme (light / dark).  
 
-Also you can see time of last save of file, current time and number of lines, characters and words.
+    Also you can see time of last save of file, current time and number of lines, characters and words.
 
 - **Password generator**: a tool that generates passwords based on 3 parameters:
     - length (default range: from `16` to `1048576` chars), should be multiple of hyphens interval (minimal length is equal to double value of hyphens interval);
