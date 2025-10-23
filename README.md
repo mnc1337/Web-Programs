@@ -35,13 +35,13 @@ Package of webprograms. There are 6 programs that are used for different tasks. 
     - charset (default: `abcdefghijklmnopqrstuvwxyz0123456789`, but it can be changed);
     - hyphens interval (default: `8`, but it can be changed).  
 
-Password copying is supported.
+    Password copying is supported.
 
 - **Photo viewer**: a tool that helps to view photos. `It displays two parameters`:
     - scale (%) - can be changed;
     - resolution (px).  
 
-Only images extensions are supported (e.g. `png`, `jpg`, `svg`, `ico`, `apng`, `avif`, `webp`, etc.).
+    Only images extensions are supported (e.g. `png`, `jpg`, `svg`, `ico`, `apng`, `avif`, `webp`, etc.).
 
 ## Security
 
